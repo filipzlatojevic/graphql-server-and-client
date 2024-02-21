@@ -97,7 +97,13 @@ const mutation = new GraphQLObjectType({
     deleteClient: {
       type: ClientType,
       args: { id: { type: GraphQLNonNull(GraphQLID) } },
-      resolve(parent, args) {
+      async resolve(parent, args) {
+        const projects = await Project.find({ clientId: args.id });
+        for (let project of projects) {
+          // await Project.deleteOne({ _id: project.id });
+          await Project.findByIdAndDelete(project.id);
+        }
+
         return Client.findByIdAndDelete(args.id);
       },
     },
@@ -119,6 +125,56 @@ const mutation = new GraphQLObjectType({
           defaultValue: "Not Started",
         },
         clientId: { type: GraphQLNonNull(GraphQLID) },
+      },
+      resolve(parent, args) {
+        let project = new Project({
+          name: args.name,
+          description: args.description,
+          status: args.status,
+          clientId: args.clientId,
+        });
+
+        return project.save();
+      },
+    },
+    // Delete project
+    deleteProject: {
+      type: ProjectType,
+      args: { id: { type: GraphQLNonNull(GraphQLID) } },
+      resolve(parent, args) {
+        return Project.findByIdAndDelete(args.id);
+      },
+    },
+    // Update project
+    updateProject: {
+      type: ProjectType,
+      args: {
+        id: { type: GraphQLNonNull(GraphQLID) },
+        name: { type: GraphQLString },
+        description: { type: GraphQLString },
+        status: {
+          type: new GraphQLEnumType({
+            name: "ProjectStatusUpdate",
+            values: {
+              new: { value: "Not Started" },
+              progress: { value: "In Progress" },
+              completed: { value: "Completed" },
+            },
+          }),
+        },
+      },
+      resolve(parent, args) {
+        return Project.findByIdAndUpdate(
+          args.id,
+          {
+            $set: {
+              name: args.name,
+              description: args.description,
+              status: args.status,
+            },
+          },
+          { new: true }
+        );
       },
     },
   },
