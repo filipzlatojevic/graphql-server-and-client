@@ -100,8 +100,8 @@ const mutation = new GraphQLObjectType({
       async resolve(parent, args) {
         const projects = await Project.find({ clientId: args.id });
         for (let project of projects) {
-          // await Project.deleteOne({ _id: project.id });
-          await Project.findByIdAndDelete(project.id);
+          await Project.deleteOne({ _id: project.id });
+          // await Project.findByIdAndDelete(project.id);
         }
 
         return Client.findByIdAndDelete(args.id);
